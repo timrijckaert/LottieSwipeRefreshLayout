@@ -1,0 +1,43 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext {
+        buildToolsVersion = "25.0.0"
+        compileSdkVersion = 25
+        defaultMinSdkVersion = 16
+        defaultTargetSdkVersion = 25
+        kotlin_version = "1.0.6"
+
+        android_support_version = "25.0.0"
+
+        junit_version = "4.12"
+    }
+
+    ext.libraries = [
+            android_appcompat  : "com.android.support:appcompat-v7:$android_support_version",
+            design_support     : "com.android.support:design:$android_support_version",
+            kotlin             : "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version",
+
+            // TESTING
+            junit              : "junit:junit:$junit_version"
+    ]
+
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-android-extensions:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
