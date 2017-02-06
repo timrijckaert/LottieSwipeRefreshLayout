@@ -1,6 +1,7 @@
 package be.rijckaert.tim.lib
 
 import android.content.Context
+import android.os.Bundle
 import android.os.Parcelable
 import android.support.v4.view.MotionEventCompat
 import android.support.v4.view.ViewCompat
@@ -44,6 +45,8 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     private val MAX_OFFSET_ANIMATION_DURATION = 700 //ms
     private val DRAG_MAX_DISTANCE: Int = 230 //dp
     private val DRAG_RATE = .85f
+    private val EXTRA_SUPER_STATE = "be.rijckaert.tim.lib.CustomPullToRefreshLayout.EXTRA_SUPER_STATE"
+    private val EXTRA_IS_REFRESHING = "be.rijckaert.tim.lib.CustomPullToRefreshLayout.EXTRA_IS_REFRESHING"
 
     init {
         if (childCount > 1) {
@@ -140,17 +143,27 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     }
 
     private fun setTargetOffsetTop(offset: Int) {
-        //target.offsetTopAndBottom(offset)
-        //refreshView.offsetTopAndBottom(offset)
+        target.offsetTopAndBottom(offset)
+        refreshView.offsetTopAndBottom(offset)
         currentOffsetTop = target.top
     }
 
     override fun onSaveInstanceState(): Parcelable {
-        return super.onSaveInstanceState()
+        val bundle = Bundle()
+        bundle.putParcelable(EXTRA_SUPER_STATE, super.onSaveInstanceState())
+        bundle.putBoolean(EXTRA_IS_REFRESHING, isRefreshing)
+        return bundle
     }
 
     override fun onRestoreInstanceState(state: Parcelable?) {
-        super.onRestoreInstanceState(state)
+        if (state is Bundle) {
+            super.onRestoreInstanceState(state.getParcelable<Parcelable>(EXTRA_SUPER_STATE))
+            if (state.getBoolean(EXTRA_IS_REFRESHING)) {
+                post {
+                    setRefreshing(true, false)
+                }
+            }
+        }
     }
 
     override fun onTouchEvent(motionEvent: MotionEvent): Boolean {
