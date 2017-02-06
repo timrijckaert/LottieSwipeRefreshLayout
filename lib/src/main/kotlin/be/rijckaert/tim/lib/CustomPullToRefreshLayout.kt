@@ -14,6 +14,7 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
 import com.airbnb.lottie.LottieAnimationView
+import java.lang.Math.abs
 
 class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                                                           attrs: AttributeSet? = null,
@@ -129,7 +130,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
             val right = paddingRight
             val bottom = paddingBottom
 
-            Log.d(DEBUG_TAG, "::: onLayout :::")
+            log("::: onLayout :::")
             it.layout(left, top + it.top, left + width - right, top + height - bottom + it.top)
             refreshView.layout(left, top, left + width - right, top + height - bottom)
         }
@@ -157,12 +158,14 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     //</editor-fold>
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        //Ignore scroll touch events when the user is not on the top of the list
         if (!isEnabled || canChildScrollUp() || isRefreshing) {
             return false
         }
 
         when (MotionEventCompat.getActionMasked(ev)) {
             ACTION_DOWN -> {
+                log(":: onInterceptTouchEvent#ACTION_DOWN :: ")
                 setTargetOffsetTop(0)
                 activePointerId = ev.getPointerId(0)
                 isBeingDragged = false
@@ -173,6 +176,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                 initialMotionY = motionY
             }
             ACTION_MOVE -> {
+                log(":: onInterceptTouchEvent#ACTION_MOVE :: ")
                 if (activePointerId == INVALID_POINTER_ID) {
                     return false
                 }
@@ -181,24 +185,30 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                 if (y == -1f) {
                     return false
                 }
+
                 val yDiff = y - initialMotionY
                 if (yDiff > touchSlop && !isBeingDragged) {
                     isBeingDragged = true
                 }
             }
             ACTION_UP, ACTION_CANCEL -> {
+                log(":: onInterceptTouchEvent#ACTION_UP || onInterceptTouchEvent#ACTION_CANCEL :: ")
                 isBeingDragged = false
                 activePointerId = INVALID_POINTER_ID
             }
             ACTION_POINTER_UP -> {
+                log(":: onInterceptTouchEvent#ACTION_POINTER_UP :: ")
                 onSecondaryPointerUp(ev)
             }
         }
 
+        //Return true to steal motion events from the children and have
+        //them dispatched to this ViewGroup through onTouchEvent()
         return isBeingDragged
     }
 
     override fun onTouchEvent(motionEvent: MotionEvent): Boolean {
+        //If the user is still moving the pointer don't respond yet
         if (!isBeingDragged) {
             return super.onTouchEvent(motionEvent)
         }
@@ -211,13 +221,15 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                 }
                 val x = motionEvent.getX(pointerIndex)
                 val y = motionEvent.getY(pointerIndex)
+
                 val yDiff = y - initialMotionY
                 val scrollTop = yDiff * DRAG_RATE
                 currentDragPercent = scrollTop / totalDragDistance
                 if (currentDragPercent < 0) {
                     return false
                 }
-                val boundedDragPercent = Math.min(1f, Math.abs(currentDragPercent))
+                val boundedDragPercent = Math.min(1f, abs(currentDragPercent))
+                log(":: onTouchEvent#ACTION_MOVE $boundedDragPercent% :: ")
                 val slingshotDist = totalDragDistance
                 val targetY = (slingshotDist * boundedDragPercent).toInt()
 
@@ -228,12 +240,15 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                 setTargetOffsetTop(targetY - currentOffsetTop)
             }
             ACTION_POINTER_DOWN -> {
+                log(":: onTouchEvent#ACTION_POINTER_DOWN :: ")
                 activePointerId = motionEvent.getPointerId(MotionEventCompat.getActionIndex(motionEvent))
             }
             ACTION_POINTER_UP -> {
+                log(":: onTouchEvent#ACTION_POINTER_UP :: ")
                 onSecondaryPointerUp(motionEvent)
             }
             ACTION_UP, ACTION_CANCEL -> {
+                log(":: onTouchEvent#ACTION_UP || onTouchEvent#ACTION_CANCEL :: ")
                 if (activePointerId == INVALID_POINTER_ID) {
                     return false
                 }
@@ -254,6 +269,10 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     }
 
     //<editor-fold desc="Helper Functions">
+    private fun log(s: String) {
+        Log.d(DEBUG_TAG, s)
+    }
+
     private fun setTargetOffsetTop(offset: Int) {
         target.offsetTopAndBottom(offset)
         refreshView.offsetTopAndBottom(offset)
@@ -263,7 +282,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     private fun animateOffsetToStartPosition() {
         fromDragPercent = currentDragPercent
         from = currentOffsetTop
-        val animationDuration = Math.abs((MAX_OFFSET_ANIMATION_DURATION * fromDragPercent).toLong())
+        val animationDuration = abs((MAX_OFFSET_ANIMATION_DURATION * fromDragPercent).toLong())
 
         //reset the animation values
     }
