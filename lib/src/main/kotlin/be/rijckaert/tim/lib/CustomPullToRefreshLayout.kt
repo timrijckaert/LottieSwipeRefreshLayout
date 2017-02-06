@@ -6,6 +6,7 @@ import android.os.Parcelable
 import android.support.v4.view.MotionEventCompat
 import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
+import android.util.Log
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.MotionEvent.*
@@ -55,6 +56,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     private var fromDragPercent: Float = 0F
     private var from: Int = 0
 
+    private val DEBUG_TAG = this.javaClass.simpleName
     private val MAX_OFFSET_ANIMATION_DURATION = 700 //ms
     private val DRAG_MAX_DISTANCE: Int = 230 //dp
     private val DRAG_RATE = .85f
@@ -127,6 +129,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
             val right = paddingRight
             val bottom = paddingBottom
 
+            Log.d(DEBUG_TAG, "::: onLayout :::")
             it.layout(left, top + it.top, left + width - right, top + height - bottom + it.top)
             refreshView.layout(left, top, left + width - right, top + height - bottom)
         }
@@ -169,27 +172,27 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                 }
                 initialMotionY = motionY
             }
-        /*ACTION_MOVE -> {
-            if (activePointerId == INVALID_POINTER_ID) {
-                return false
-            }
+            ACTION_MOVE -> {
+                if (activePointerId == INVALID_POINTER_ID) {
+                    return false
+                }
 
-            val y = getMotionEventY(ev)
-            if (y == -1f) {
-                return false
+                val y = getMotionEventY(ev)
+                if (y == -1f) {
+                    return false
+                }
+                val yDiff = y - initialMotionY
+                if (yDiff > touchSlop && !isBeingDragged) {
+                    isBeingDragged = true
+                }
             }
-            val yDiff = y - initialMotionY
-            if (yDiff > touchSlop && !isBeingDragged) {
-                isBeingDragged = true
+            ACTION_UP, ACTION_CANCEL -> {
+                isBeingDragged = false
+                activePointerId = INVALID_POINTER_ID
             }
-        }
-        ACTION_UP, ACTION_CANCEL -> {
-            isBeingDragged = false
-            activePointerId = INVALID_POINTER_ID
-        }
-        ACTION_POINTER_UP -> {
-            onSecondaryPointerUp(ev)
-        }*/
+            ACTION_POINTER_UP -> {
+                onSecondaryPointerUp(ev)
+            }
         }
 
         return isBeingDragged

@@ -3,7 +3,7 @@ package be.rijckaert.tim
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
-import be.rijckaert.tim.lib.RecyclerView
+import android.support.v7.widget.RecyclerView
 
 class MainActivity : AppCompatActivity() {
 
