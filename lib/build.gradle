@@ -35,7 +35,8 @@ dependencies {
     compile(
             libraries.android_appcompat,
             libraries.design_support,
-            libraries.kotlin
+            libraries.kotlin,
+            libraries.lottie
     )
 
     testCompile(libraries.junit)
