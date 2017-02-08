@@ -19,12 +19,13 @@ import java.lang.Math.abs
 class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                                                           attrs: AttributeSet? = null,
                                                           defStyleAttr: Int = 0) : ViewGroup(context, attrs, defStyleAttr) {
+
     //<editor-fold desc="Fields & State Keeping">
     var isRefreshing: Boolean = false
     var onChildScrollUpCallback: OnChildScrollUpCallback? = null
     var onRefreshListener: OnRefreshListener? = null
-
     private var isBeingDragged: Boolean = false
+
     private val touchSlop by lazy { ViewConfiguration.get(context).scaledTouchSlop }
     private val target: View by lazy {
         var localView: View = getChildAt(0)
@@ -40,27 +41,28 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
         }
         localView
     }
-
     private val refreshView by lazy { LottieAnimationView(context) }
+
     private var targetPaddingBottom: Int = 0
     private var targetPaddingLeft: Int = 0
     private var targetPaddingRight: Int = 0
-
     private var targetPaddingTop: Int = 0
+
     private var initialMotionY: Float = 0F
-
     private var activePointerId: Int = 0
-    private var currentOffsetTop: Int = 0
 
+    private var currentOffsetTop: Int = 0
     private val totalDragDistance: Float
+
     private var currentDragPercent: Float = 0F
     private var fromDragPercent: Float = 0F
     private var from: Int = 0
-
     private val DEBUG_TAG = this.javaClass.simpleName
+
     private val MAX_OFFSET_ANIMATION_DURATION = 700 //ms
     private val DRAG_MAX_DISTANCE: Int = 230 //dp
     private val DRAG_RATE = .85f
+    private val ANIMATION_RESOURCE_NAME = "animation.json"
     private val EXTRA_SUPER_STATE = "be.rijckaert.tim.lib.CustomPullToRefreshLayout.EXTRA_SUPER_STATE"
     private val EXTRA_IS_REFRESHING = "be.rijckaert.tim.lib.CustomPullToRefreshLayout.EXTRA_IS_REFRESHING"
     //</editor-fold>
@@ -72,8 +74,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
 
         totalDragDistance = dpToPx(DRAG_MAX_DISTANCE)
 
-        refreshView.setAnimation("animation.json")
-        refreshView.playAnimation()
+        refreshView.setAnimation(ANIMATION_RESOURCE_NAME)
 
         addView(refreshView)
         setWillNotDraw(false)
@@ -236,9 +237,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                 val slingshotDist = totalDragDistance
                 val targetY = (slingshotDist * boundedDragPercent).toInt()
 
-                //TODO: Tell LottieView to already load a piece of the animation puzzle
-                //mRefreshDrawable.setPointerPosition(x, y)
-                //mRefreshDrawable.setPercent(currentDragPercent, true)
+                refreshView.progress = boundedDragPercent
 
                 setTargetOffsetTop(targetY - currentOffsetTop)
             }
