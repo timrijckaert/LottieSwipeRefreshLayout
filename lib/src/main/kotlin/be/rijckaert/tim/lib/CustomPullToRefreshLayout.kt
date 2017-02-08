@@ -72,6 +72,9 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
 
         totalDragDistance = dpToPx(DRAG_MAX_DISTANCE)
 
+        refreshView.setAnimation("animation.json")
+        refreshView.playAnimation()
+
         addView(refreshView)
         setWillNotDraw(false)
         ViewCompat.setChildrenDrawingOrderEnabled(this, true)
@@ -285,6 +288,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
         val animationDuration = abs((MAX_OFFSET_ANIMATION_DURATION * fromDragPercent).toLong())
 
         //reset the animation values
+        log("reset")
     }
 
     private fun onSecondaryPointerUp(motionEvent: MotionEvent) {
