@@ -6,7 +6,7 @@ buildscript {
         defaultMinSdkVersion = 16
         defaultTargetSdkVersion = 25
 
-        kotlin_version = "1.0.6"
+        kotlin_version = "1.1.1"
         lottie_version = "1.0.1"
 
         android_support_version = "25.0.0"
@@ -29,7 +29,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.android.tools.build:gradle:2.3.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-android-extensions:$kotlin_version"
     }
