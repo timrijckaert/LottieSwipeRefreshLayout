@@ -175,7 +175,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
             it.layout(left, top + it.top, left + width - right, top + height - bottom + it.top)
 
             //Our refresh animation is above our first child
-            refreshView.layout(left, -REFRESH_VIEW_HEIGHT.toInt(), width, top)
+            refreshView.layout(left, -REFRESH_VIEW_HEIGHT, width, top)
         }
     }
     //</editor-fold>

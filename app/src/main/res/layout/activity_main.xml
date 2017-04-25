@@ -5,6 +5,7 @@
     android:id="@+id/pullToRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    app:maxResetAnimationDuration=""
     app:lottieAnimation="pull_to_refresh.json">
 
     <android.support.v7.widget.RecyclerView

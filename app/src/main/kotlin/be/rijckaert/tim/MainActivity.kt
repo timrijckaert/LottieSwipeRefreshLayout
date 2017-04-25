@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
         pullToRefresh.onRefreshListener = {
             thread {
                 //
-                Thread.sleep(2000)
+                Thread.sleep(5000)
 
                 runOnUiThread {
                     pullToRefresh.setRefreshing(false, false)
