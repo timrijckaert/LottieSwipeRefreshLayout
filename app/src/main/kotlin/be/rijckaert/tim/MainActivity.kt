@@ -9,7 +9,7 @@ import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
 
-    val dataSource = (0..100).map { "Random String $it" }.toTypedArray()
+    val dataSource = (1..19).map { "Ik haat API $it" }.toTypedArray()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -1,6 +1,8 @@
 package be.rijckaert.tim.lib
 
-import android.animation.ValueAnimator
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.os.Bundle
 import android.os.Parcelable
@@ -16,6 +18,7 @@ import android.view.ViewConfiguration
 import android.view.ViewGroup
 import com.airbnb.lottie.LottieAnimationView
 import java.lang.Math.abs
+import java.lang.Math.min
 
 class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                                                           attrs: AttributeSet? = null,
@@ -28,7 +31,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     private var isBeingDragged: Boolean = false
 
     private val touchSlop by lazy { ViewConfiguration.get(context).scaledTouchSlop }
-    private val recyclerView by lazy {
+    private val target by lazy {
         var localView: View = getChildAt(0)
         for (i in 0..childCount - 1) {
             val child = getChildAt(i)
@@ -58,16 +61,17 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     private var initialMotionY: Float = 0F
     private var activePointerId: Int = 0
 
-    private var currentOffsetTop: Int = 0
+    private val currentOffsetTop: Int
+        get() = target.top
     private val totalDragDistance: Float
 
     private var currentDragPercent: Float = 0F
     private var fromDragPercent: Float = 0F
     private var from: Int = 0
-    private val DEBUG_TAG = this.javaClass.simpleName
 
-    private val MAX_OFFSET_ANIMATION_DURATION = 700 //ms
-    private val DRAG_MAX_DISTANCE: Int = pxTodp(300).toInt() //dp
+    private val MAX_OFFSET_ANIMATION_DURATION = 400 //ms
+    private val REFRESH_VIEW_HEIGHT = 300
+    private val DRAG_MAX_DISTANCE: Int = pxTodp(REFRESH_VIEW_HEIGHT).toInt() //dp
     private val DRAG_RATE = .85f
     private val ANIMATION_RESOURCE_NAME = "pulll_to_refresh.json"
     private val EXTRA_SUPER_STATE = "be.rijckaert.tim.lib.CustomPullToRefreshLayout.EXTRA_SUPER_STATE"
@@ -80,14 +84,10 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
         totalDragDistance = dpToPx(DRAG_MAX_DISTANCE)
 
         addView(refreshView)
-        setWillNotDraw(false)
-        ViewCompat.setChildrenDrawingOrderEnabled(this, true)
-    }
+        this.clipChildren = false
 
-    private fun checkPreconditions() {
-        if (childCount > 1) {
-            throw IllegalStateException("You can attach only one child to the CustomPullToRefreshLayout!")
-        }
+        //This ViewGroup does not draw things on the canvas
+        setWillNotDraw(false)
     }
 
     fun setRefreshing(refreshing: Boolean, notify: Boolean) {
@@ -101,8 +101,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
 
                 if (notify) { onRefreshListener?.onRefresh() }
 
-                currentOffsetTop = recyclerView.top
-                recyclerView.setPadding(targetPaddingLeft, targetPaddingTop, targetPaddingRight, targetPaddingBottom)
+                target.setPadding(targetPaddingLeft, targetPaddingTop, targetPaddingRight, targetPaddingBottom)
             } else {
                 animateOffsetToStartPosition()
             }
@@ -110,17 +109,8 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     }
 
     //<editor-fold desc="View Rendering">
-    override fun onMeasure(width: Int, height: Int) {
-        super.onMeasure(width, height)
-
-        val widthMeasureSpec = MeasureSpec.makeMeasureSpec(measuredWidth - paddingLeft - paddingRight, View.MeasureSpec.EXACTLY)
-        val heightMeasureSpec = MeasureSpec.makeMeasureSpec(measuredHeight - paddingTop - paddingBottom, View.MeasureSpec.EXACTLY)
-
-        recyclerView.measure(widthMeasureSpec, heightMeasureSpec)
-    }
-
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        recyclerView.let {
+        target.let {
             val height = measuredHeight
             val width = measuredWidth
             val left = paddingLeft
@@ -128,10 +118,8 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
             val right = paddingRight
             val bottom = paddingBottom
 
-            log("::: onLayout :::")
             it.layout(left, top + it.top, left + width - right, top + height - bottom + it.top)
-            refreshView.layout(left, top, width, top + 300)
-            refreshView.translationY = -300F
+            refreshView.layout(left, -REFRESH_VIEW_HEIGHT, width, top)
         }
     }
     //</editor-fold>
@@ -157,6 +145,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     //</editor-fold>
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        //Prevent the list from scrolling while a pull to refresh animation is ongoing
         if (isRefreshing) {
             return true
         }
@@ -173,21 +162,14 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                 activePointerId = ev.getPointerId(0)
                 isBeingDragged = false
                 val motionY = getMotionEventY(ev)
-                if (motionY == -1f) {
-                    return false
-                }
+                if (motionY == -1f) { return false }
                 initialMotionY = motionY
             }
             ACTION_MOVE -> {
-                log(":: onInterceptTouchEvent#ACTION_MOVE :: ")
-                if (activePointerId == INVALID_POINTER_ID) {
-                    return false
-                }
+                if (activePointerId == INVALID_POINTER_ID) { return false }
 
                 val y = getMotionEventY(ev)
-                if (y == -1f) {
-                    return false
-                }
+                if (y == -1f) { return false }
 
                 val yDiff = y - initialMotionY
                 if (yDiff > touchSlop && !isBeingDragged) {
@@ -195,12 +177,10 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                 }
             }
             ACTION_UP, ACTION_CANCEL -> {
-                log(":: onInterceptTouchEvent#ACTION_UP || onInterceptTouchEvent#ACTION_CANCEL :: ")
                 isBeingDragged = false
                 activePointerId = INVALID_POINTER_ID
             }
             ACTION_POINTER_UP -> {
-                log(":: onInterceptTouchEvent#ACTION_POINTER_UP :: ")
                 onSecondaryPointerUp(ev)
             }
         }
@@ -219,9 +199,8 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
         when (MotionEventCompat.getActionMasked(motionEvent)) {
             ACTION_MOVE -> {
                 val pointerIndex = motionEvent.findPointerIndex(activePointerId)
-                if (pointerIndex != 0) {
-                    return false
-                }
+                if (pointerIndex != 0) { return false }
+
                 val y = motionEvent.getY(pointerIndex)
 
                 val yDiff = y - initialMotionY
@@ -230,8 +209,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                 if (currentDragPercent < 0) {
                     return false
                 }
-                val boundedDragPercent = Math.min(1f, abs(currentDragPercent))
-                log(":: onTouchEvent#ACTION_MOVE $boundedDragPercent% :: ")
+                val boundedDragPercent = min(1f, abs(currentDragPercent))
                 val slingshotDist = totalDragDistance
                 val targetY = (slingshotDist * boundedDragPercent).toInt()
 
@@ -269,15 +247,22 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     }
 
     //<editor-fold desc="Helper Functions">
+    /**
+     * Prevent our ViewGroup from having more than one child.
+     */
+    private fun checkPreconditions() {
+        if (childCount > 1) {
+            throw IllegalStateException("You can attach only one child to the CustomPullToRefreshLayout!")
+        }
+    }
+
     private fun log(s: String) {
-        Log.d(DEBUG_TAG, s)
+        Log.d(this.javaClass.simpleName, s)
     }
 
     private fun setTargetOffsetTop(offset: Int) {
-        log("setTargetOffsetTop($offset)")
-        recyclerView.offsetTopAndBottom(offset)
+        target.offsetTopAndBottom(offset)
         refreshView.offsetTopAndBottom(offset)
-        currentOffsetTop = recyclerView.top
     }
 
     private fun animateOffsetToStartPosition() {
@@ -286,26 +271,28 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
 
         refreshView.cancelAnimation()
 
-        val valueAnimator: ValueAnimator = ValueAnimator.ofInt(0, -from)
-                .setDuration(abs((MAX_OFFSET_ANIMATION_DURATION * fromDragPercent).toLong()))
-        var sum = from
-        valueAnimator.addUpdateListener {
-            if (sum + (it.animatedValue as Int) > 0) {
-                refreshView.offsetTopAndBottom(it.animatedValue as Int)
-                recyclerView.offsetTopAndBottom(it.animatedValue as Int)
-                sum += it.animatedValue as Int
-            } else {
-                refreshView.offsetTopAndBottom(-sum)
-                recyclerView.offsetTopAndBottom(-sum)
-                valueAnimator.cancel()
-            }
-        }
-        valueAnimator.start()
-
         //calculated value to decide how long the reset animation should take
         val animationDuration = abs((MAX_OFFSET_ANIMATION_DURATION * fromDragPercent).toLong())
 
-        log("reset")
+        ObjectAnimator.ofInt(refreshView, "top", -REFRESH_VIEW_HEIGHT)
+                .apply {
+                    addListener(object : AnimatorListenerAdapter() {
+                        override fun onAnimationEnd(animation: Animator?) {
+                            refreshView.top = -REFRESH_VIEW_HEIGHT
+                            refreshView.bottom = 0
+                        }
+
+                        override fun onAnimationCancel(animation: Animator?) {
+                            refreshView.top = -REFRESH_VIEW_HEIGHT
+                            refreshView.bottom = 0
+                        }
+                    })
+                    duration = animationDuration
+                }
+                .start()
+        ObjectAnimator.ofInt(target, "top", 0)
+                .apply { duration = animationDuration }
+                .start()
     }
 
     private fun onSecondaryPointerUp(motionEvent: MotionEvent) {
@@ -327,11 +314,11 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     private fun canChildScrollUp(): Boolean {
         if (onChildScrollUpCallback != null) {
             onChildScrollUpCallback?.let {
-                return it.canChildScrollUp(this, recyclerView)
+                return it.canChildScrollUp(this, target)
             }
         }
 
-        return ViewCompat.canScrollVertically(recyclerView, -1)
+        return ViewCompat.canScrollVertically(target, -1)
     }
 
     private fun dpToPx(dp: Int): Float = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), resources.displayMetrics)
