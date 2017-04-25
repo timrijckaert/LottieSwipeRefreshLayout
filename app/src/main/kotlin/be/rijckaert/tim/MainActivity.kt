@@ -9,7 +9,7 @@ import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
 
-    val dataSource = (1..19).map { "Ik haat API $it" }.toTypedArray()
+    val dataSource = (1..19).map { "I hate API $it" }.toTypedArray()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,14 +22,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         val pullToRefresh = findViewById(R.id.pullToRefresh) as CustomPullToRefreshLayout
-        pullToRefresh.onRefreshListener = object : CustomPullToRefreshLayout.OnRefreshListener {
-            override fun onRefresh() {
-                thread {
-                    Thread.sleep(2000)
+        pullToRefresh.onRefreshListener = {
+            thread {
+                //
+                Thread.sleep(2000)
 
-                    runOnUiThread {
-                        pullToRefresh.setRefreshing(false, false)
-                    }
+                runOnUiThread {
+                    pullToRefresh.setRefreshing(false, false)
                 }
             }
         }
