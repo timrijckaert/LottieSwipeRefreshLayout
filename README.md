@@ -29,9 +29,9 @@ See example for more detail.
 
 Custom Attributes include:
 
-* app:lottieAnimation="pull_to_refresh.json" (Specify the animation to play)
-* app:lottieAnimationHeight="500" (Tell the view how big it should be)
-* app:maxResetAnimationDuration="300" (Specify how long the translation animation should take when snapping back to it's original state)
+* `app:lottieAnimation="pull_to_refresh.json"` (Specify the animation to play)
+* `app:lottieAnimationHeight="500"` (Tell the view how big it should be)
+* `app:maxResetAnimationDuration="300"` (Specify how long the translation animation should take when snapping back to it's original state)
 
 TODO:
 * View State is not working for the moment
