@@ -35,3 +35,5 @@ Custom Attributes include:
 
 TODO:
 * View State is not working for the moment
+* Option to set startDelay() and other Lottie related properties
+* Option to disable progressive pull-to-refresh
