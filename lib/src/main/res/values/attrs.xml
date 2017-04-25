@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CustomPullToRefreshLayout">
+        <attr name="lottieAnimationHeight" format="integer"/>
+        <attr name="lottieAnimation" format="string"/>
+        <attr name="maxResetAnimationDuration" format="integer" />
+    </declare-styleable>
+</resources>

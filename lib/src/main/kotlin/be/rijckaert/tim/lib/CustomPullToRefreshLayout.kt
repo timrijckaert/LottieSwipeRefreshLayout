@@ -2,12 +2,15 @@ package be.rijckaert.tim.lib
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.animation.ObjectAnimator.ofInt
 import android.content.Context
 import android.os.Bundle
 import android.os.Parcelable
 import android.support.v4.view.MotionEventCompat
 import android.support.v4.view.ViewCompat
+import android.support.v7.widget.TintTypedArray
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
@@ -27,7 +30,7 @@ import java.lang.Math.min
  * A SwipeRefreshLayout which can display a Lottie Animation.
  * Custom Attributes include:
  * - The height of the Lottie View
- * - The animation json
+ * - The animation json (it should reside in the assets-folder, don't forget the '.json' extension)
  * - The maximum maximum duration of the resetting animation
  *
  * ViewState check!
@@ -98,33 +101,45 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     private var targetPaddingRight: Int = 0
     private var targetPaddingTop: Int = 0
 
-    private var initialMotionY: Float = 0F
+    private var initialMotionY: Float = 0f
     private var activePointerId: Int = 0
 
     private val currentOffsetTop: Int
-        get() = target.top
+        inline get() = target.top
 
     private val totalDragDistance: Float
 
-    private var currentDragPercent: Float = 0F
-    private var fromDragPercent: Float = 0F
+    private var currentDragPercent: Float = 0f
+    private var fromDragPercent: Float = 0f
 
-    private val MAX_OFFSET_ANIMATION_DURATION = 400 //ms
-    private val REFRESH_VIEW_HEIGHT = 300
-    private val DRAG_MAX_DISTANCE: Int = pxTodp(REFRESH_VIEW_HEIGHT).toInt() //dp
     private val DRAG_RATE = .85f
-    private val ANIMATION_RESOURCE_NAME = "pulll_to_refresh.json"
+
     private val EXTRA_SUPER_STATE = "be.rijckaert.tim.lib.CustomPullToRefreshLayout.EXTRA_SUPER_STATE"
     private val EXTRA_IS_REFRESHING = "be.rijckaert.tim.lib.CustomPullToRefreshLayout.EXTRA_IS_REFRESHING"
+
+    //Customizable Properties
+    private val DEFAULT_REFRESH_VIEW_HEIGHT = 300
+    private val DEFAULT_OFFSET_ANIMATION_DURATION = 400
+
+    private var REFRESH_VIEW_HEIGHT = DEFAULT_REFRESH_VIEW_HEIGHT
+    private var MAX_OFFSET_ANIMATION_DURATION = DEFAULT_OFFSET_ANIMATION_DURATION //ms
+    private var ANIMATION_RESOURCE_NAME = "pull_to_refresh.json"
     //</editor-fold>
 
+    private val DRAG_MAX_DISTANCE by lazy { pxTodp(REFRESH_VIEW_HEIGHT).toInt() } //dp
+
     init {
+        val styledAttributes = TintTypedArray.obtainStyledAttributes(context, attrs, R.styleable.CustomPullToRefreshLayout, 0, 0)
+        initializeRefreshViewHeight(styledAttributes)
+        initializeLottieAnimation(styledAttributes)
+        initializeMaxOffSetAnimationDuration(styledAttributes)
+        styledAttributes.recycle()
+
         checkPreconditions()
 
         totalDragDistance = dpToPx(DRAG_MAX_DISTANCE)
 
         addView(refreshView)
-        this.clipChildren = false
 
         //This ViewGroup does not draw things on the canvas
         setWillNotDraw(false)
@@ -160,7 +175,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
             it.layout(left, top + it.top, left + width - right, top + height - bottom + it.top)
 
             //Our refresh animation is above our first child
-            refreshView.layout(left, -REFRESH_VIEW_HEIGHT, width, top)
+            refreshView.layout(left, -REFRESH_VIEW_HEIGHT.toInt(), width, top)
         }
     }
     //</editor-fold>
@@ -291,6 +306,24 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
     }
 
     //<editor-fold desc="Helper Functions">
+    private fun initializeMaxOffSetAnimationDuration(styledAttributes: TintTypedArray) {
+        val durationStyleableInt = R.styleable.CustomPullToRefreshLayout_maxResetAnimationDuration
+        if (styledAttributes.hasValue(durationStyleableInt)) {
+            MAX_OFFSET_ANIMATION_DURATION = styledAttributes.getInteger(durationStyleableInt, DEFAULT_OFFSET_ANIMATION_DURATION)
+        }
+    }
+
+    private fun initializeLottieAnimation(styledAttributes: TintTypedArray) {
+        ANIMATION_RESOURCE_NAME = styledAttributes.getString(R.styleable.CustomPullToRefreshLayout_lottieAnimation)
+    }
+
+    private fun initializeRefreshViewHeight(styledAttributes: TintTypedArray) {
+        val animationHeightStyleableInt = R.styleable.CustomPullToRefreshLayout_lottieAnimationHeight
+        if (styledAttributes.hasValue(animationHeightStyleableInt)) {
+            REFRESH_VIEW_HEIGHT = styledAttributes.getInteger(animationHeightStyleableInt, DEFAULT_REFRESH_VIEW_HEIGHT)
+        }
+    }
+
     /**
      * Prevent our ViewGroup from having more than one child.
      */
@@ -313,15 +346,14 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
         //calculated value to decide how long the reset animation should take
         val animationDuration = abs((MAX_OFFSET_ANIMATION_DURATION * fromDragPercent).toLong())
 
-        ofInt(refreshView, "top", -REFRESH_VIEW_HEIGHT)
-                .apply {
-                    addListener(resetRefreshAnimation)
-                    duration = animationDuration
-                }
-                .start()
-        ofInt(target, "top", 0)
-                .apply { duration = animationDuration }
-                .start()
+        val refreshResetAnimation: ObjectAnimator =
+                ofInt(refreshView, "top", -REFRESH_VIEW_HEIGHT)
+                        .apply {
+                            addListener(resetRefreshAnimation)
+                            duration = animationDuration
+                        }
+        val targetResetAnimation = ofInt(target, "top", 0).apply { duration = animationDuration }
+        AnimatorSet().apply { playTogether(refreshResetAnimation, targetResetAnimation) }.start()
     }
 
     private fun onSecondaryPointerUp(motionEvent: MotionEvent) {
@@ -350,8 +382,8 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
         return ViewCompat.canScrollVertically(target, -1)
     }
 
-    private fun dpToPx(dp: Int): Float = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), resources.displayMetrics)
+    private fun dpToPx(dp: Int) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), resources.displayMetrics)
 
-    private fun pxTodp(px: Int): Float = px / resources.displayMetrics.density
-//</editor-fold>
+    private fun pxTodp(px: Int) = px / resources.displayMetrics.density
+    //</editor-fold>
 }
