@@ -13,7 +13,6 @@ class MainActivity : AppCompatActivity() {
     val dataSource = (1..19).map { "I hate API $it" }.toTypedArray()
 
     private val simpleAdapter = SimpleAdapter()
-
     private val SIMULATED_NETWORK_DELAY = 2 * 1000L //ms
 
     override fun onCreate(savedInstanceState: Bundle?) {

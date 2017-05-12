@@ -61,19 +61,20 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
 
     //Think RecyclerView
     private val target by lazy {
-        var localView: View = getChildAt(0)
-        for (i in 0..childCount - 1) {
-            val child = getChildAt(i)
-            if (child !== refreshView) {
-                localView = child
-                targetPaddingBottom = localView.paddingBottom
-                targetPaddingLeft = localView.paddingLeft
-                targetPaddingRight = localView.paddingRight
-                targetPaddingTop = localView.paddingTop
-            }
-        }
+        val localView: View = getChildAt(0)
+//        for (i in 0..childCount - 1) {
+//            val child = getChildAt(i)
+//            if (child !== refreshView) {
+//                localView = child
+//                targetPaddingBottom = localView.paddingBottom
+//                targetPaddingLeft = localView.paddingLeft
+//                targetPaddingRight = localView.paddingRight
+//                targetPaddingTop = localView.paddingTop
+//            }
+//        }
         localView
     }
+
     private val refreshView by lazy {
         LottieAnimationView(context).apply {
             layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
@@ -142,7 +143,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
         addView(refreshView)
 
         //This ViewGroup does not draw things on the canvas
-        setWillNotDraw(false)
+        //setWillNotDraw(false)
     }
 
     fun setRefreshing(refreshing: Boolean, notify: Boolean = false) {
