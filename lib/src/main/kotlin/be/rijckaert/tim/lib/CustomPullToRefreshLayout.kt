@@ -18,6 +18,7 @@ import android.view.MotionEvent.*
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import com.airbnb.lottie.LottieAnimationView
 import java.lang.Math.abs
 import java.lang.Math.min
@@ -48,7 +49,7 @@ import java.lang.Math.min
  */
 class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
                                                           attrs: AttributeSet? = null,
-                                                          defStyleAttr: Int = 0) : ViewGroup(context, attrs, defStyleAttr) {
+                                                          defStyleAttr: Int = 0) : FrameLayout(context, attrs, defStyleAttr) {
 
     //<editor-fold desc="Fields & State Keeping">
     var isRefreshing: Boolean = false
@@ -140,7 +141,9 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
 
         totalDragDistance = dpToPx(DRAG_MAX_DISTANCE)
 
-        addView(refreshView)
+        post {
+            addView(refreshView)
+        }
 
         //This ViewGroup does not draw things on the canvas
         //setWillNotDraw(false)
@@ -165,6 +168,9 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
 
     //<editor-fold desc="View Rendering">
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        log("CustomPullToRefreshLayout::onLayout($changed: Boolean, $l: Int, $t: Int, $r: Int, $b: Int)")
+
+
         target.let {
             val height = measuredHeight
             val width = measuredWidth
@@ -173,7 +179,12 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
             val right = paddingRight
             val bottom = paddingBottom
 
-            it.layout(left, top + it.top, left + width - right, top + height - bottom + it.top)
+            log("$it::layout(0, 0, ${it.measuredWidth}, ${it.measuredHeight})")
+            it.layout(0, 0, it.measuredWidth, it.measuredHeight)
+
+            post {
+                log("$it::layout(0, 0, ${it.measuredWidth}, ${it.measuredHeight})")
+            }
 
             //Our refresh animation is above our first child
             refreshView.layout(left, -REFRESH_VIEW_HEIGHT, width, top)
