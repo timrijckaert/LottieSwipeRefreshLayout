@@ -62,17 +62,17 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
 
     //Think RecyclerView
     private val target by lazy {
-        val localView: View = getChildAt(0)
-//        for (i in 0..childCount - 1) {
-//            val child = getChildAt(i)
-//            if (child !== refreshView) {
-//                localView = child
-//                targetPaddingBottom = localView.paddingBottom
-//                targetPaddingLeft = localView.paddingLeft
-//                targetPaddingRight = localView.paddingRight
-//                targetPaddingTop = localView.paddingTop
-//            }
-//        }
+        var localView: View = getChildAt(0)
+        for (i in 0..childCount - 1) {
+            val child = getChildAt(i)
+            if (child !== refreshView) {
+                localView = child
+                targetPaddingBottom = localView.paddingBottom
+                targetPaddingLeft = localView.paddingLeft
+                targetPaddingRight = localView.paddingRight
+                targetPaddingTop = localView.paddingTop
+            }
+        }
         localView
     }
 
@@ -146,7 +146,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
         }
 
         //This ViewGroup does not draw things on the canvas
-        //setWillNotDraw(false)
+        setWillNotDraw(false)
     }
 
     fun setRefreshing(refreshing: Boolean, notify: Boolean = false) {
@@ -168,9 +168,6 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
 
     //<editor-fold desc="View Rendering">
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        log("CustomPullToRefreshLayout::onLayout($changed: Boolean, $l: Int, $t: Int, $r: Int, $b: Int)")
-
-
         target.let {
             val height = measuredHeight
             val width = measuredWidth
@@ -179,12 +176,7 @@ class CustomPullToRefreshLayout @JvmOverloads constructor(context: Context,
             val right = paddingRight
             val bottom = paddingBottom
 
-            log("$it::layout(0, 0, ${it.measuredWidth}, ${it.measuredHeight})")
-            it.layout(0, 0, it.measuredWidth, it.measuredHeight)
-
-            post {
-                log("$it::layout(0, 0, ${it.measuredWidth}, ${it.measuredHeight})")
-            }
+            it.layout(left, top + it.top, left + width - right, top + height - bottom + it.top)
 
             //Our refresh animation is above our first child
             refreshView.layout(left, -REFRESH_VIEW_HEIGHT, width, top)
