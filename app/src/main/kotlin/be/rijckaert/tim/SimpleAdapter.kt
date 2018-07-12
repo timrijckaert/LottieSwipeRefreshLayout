@@ -8,14 +8,14 @@ import android.widget.TextView
 class SimpleAdapter : RecyclerView.Adapter<SimpleAdapter.SimpleViewHolder>() {
 
     var dataSource: List<String> = emptyList()
+        set(value) {
+            field = value
+            notifyDataSetChanged()
+        }
 
     override fun getItemCount() = dataSource.size
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SimpleViewHolder {
-        val view = TextView(parent.context)
-        val viewHolder = SimpleViewHolder(view)
-        return viewHolder
-    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SimpleViewHolder = SimpleViewHolder(TextView(parent.context))
 
     override fun onBindViewHolder(holder: SimpleViewHolder, position: Int) {
         holder.textView.text = dataSource[position]

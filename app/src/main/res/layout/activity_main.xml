@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<be.rijckaert.tim.lib.CustomPullToRefreshLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@id/swipe_refresh"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:lottieAnimation="pull_to_refresh.json">
+<be.rijckaert.tim.lib.LottiePullToRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                       xmlns:app="http://schemas.android.com/apk/res-auto"
+                                       android:id="@id/swipe_refresh"
+                                       android:layout_width="match_parent"
+                                       android:layout_height="match_parent"
+                                       app:max_offset_top="250dp"
+                                       app:pull_to_refresh_lottieFile="@raw/pull_to_refresh"
+                                       app:trigger_offset_top="125dp">
 
     <android.support.v7.widget.RecyclerView
         xmlns:android="http://schemas.android.com/apk/res/android"
@@ -13,6 +14,7 @@
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_type="content"
         app:layoutManager="android.support.v7.widget.LinearLayoutManager"/>
 
-</be.rijckaert.tim.lib.CustomPullToRefreshLayout>
+</be.rijckaert.tim.lib.LottiePullToRefreshLayout>

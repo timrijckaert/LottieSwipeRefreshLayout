@@ -4,43 +4,41 @@ import android.os.Bundle
 import android.os.Handler
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.RecyclerView
-import android.view.LayoutInflater
-import be.rijckaert.tim.lib.CustomPullToRefreshLayout
-import java.lang.Thread.sleep
-import kotlin.concurrent.thread
+import android.widget.Toast
+import be.rijckaert.tim.lib.LottiePullToRefreshLayout
+import be.rijckaert.tim.lib.refreshes
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
-    val dataSource = (1..19).map { "I hate API $it" }
-
-    private val simpleAdapter = SimpleAdapter()
-    private val SIMULATED_NETWORK_DELAY = 2 * 1000L //ms
+    private val source: List<String>
+        get() {
+            val lowerBound = (1..100).random()
+            return (lowerBound..(lowerBound..101).random()).map { "This is item number $it" }
+        }
+    private val simpleAdapter = SimpleAdapter().apply { dataSource = source }
+    private val simulatedNetworkDelay = TimeUnit.SECONDS.toMillis(3)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val layout = LayoutInflater.from(this).inflate(R.layout.activity_main, null).apply {
-            (findViewById(R.id.recyclerView) as RecyclerView).adapter = simpleAdapter
+        setContentView(R.layout.activity_main)
 
-        }
-        setContentView(layout)
+        findViewById<RecyclerView>(R.id.recyclerView).adapter = simpleAdapter
 
-        (findViewById(R.id.swipe_refresh) as? CustomPullToRefreshLayout)?.let {
-            it.onRefreshListener = {
-                thread {
-                    sleep(SIMULATED_NETWORK_DELAY * 2)
-                    runOnUiThread {
-                        simpleAdapter.dataSource = (20..25).map { "I love API $it" }
-                        simpleAdapter.notifyDataSetChanged()
-
-                        it.setRefreshing(false, false)
-                    }
+        val lottiePullToRefreshLayout = findViewById<LottiePullToRefreshLayout>(R.id.swipe_refresh)
+        lottiePullToRefreshLayout.refreshes()
+                .subscribe {
+                    Handler().postDelayed({
+                        simpleAdapter.dataSource = source
+                        lottiePullToRefreshLayout.stopRefreshing()
+                    }, simulatedNetworkDelay)
                 }
-            }
-        }
 
-        Handler().postDelayed({
-            simpleAdapter.dataSource = dataSource
-            simpleAdapter.notifyDataSetChanged()
-        }, SIMULATED_NETWORK_DELAY)
+        lottiePullToRefreshLayout.onProgressListener {
+            Toast.makeText(this@MainActivity, "$it", Toast.LENGTH_SHORT).show()
+        }
     }
 }
+
+fun ClosedRange<Int>.random() = Random(System.currentTimeMillis()).nextInt((endInclusive + 1) - start) +  start
