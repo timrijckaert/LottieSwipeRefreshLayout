@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.github.dcendents.android-maven'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -27,12 +28,17 @@ android {
     }
 }
 
+
+archivesBaseName = "lottie-pull-to-refresh"
+group = 'be.vrt.mobile'
+version = '1.0'
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
-    compile(
+    implementation(
             libraries.android_appcompat,
             libraries.design_support,
             libraries.kotlin,
@@ -40,6 +46,4 @@ dependencies {
             libraries.rxjava2,
             libraries.rxandroid
     )
-
-    testCompile(libraries.junit)
 }

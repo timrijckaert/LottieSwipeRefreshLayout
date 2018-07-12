@@ -39,6 +39,10 @@ dependencies {
 
     compile(
             libraries.android_appcompat,
-            libraries.kotlin
+            libraries.design_support,
+            libraries.kotlin,
+            libraries.lottie,
+            libraries.rxjava2,
+            libraries.rxandroid
     )
 }
